@@ -4,15 +4,15 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 //
-//fun groupAnagrams(strs: Array<String>): List<List<String>> {
-//    return strs.groupBy { word -> // O(n)
-//        val freq = IntArray(26)
-//        word.forEach { ch -> freq[ch - 'a']++ } //O(m)
-//        freq.joinToString("#")
-//    }.values.toList()
-//}
-
 fun groupAnagrams(strs: Array<String>): List<List<String>> {
+    return strs.groupBy { word -> // O(n)
+        val freq = IntArray(26)
+        word.forEach { ch -> freq[ch - 'a']++ } //O(m)
+        freq.joinToString("#")
+    }.values.toList()
+}
+
+fun groupAnagrams1(strs: Array<String>): List<List<String>> {
     return strs.groupBy { word ->
         word.toCharArray().sorted().joinToString("")
     }.values.toList()
