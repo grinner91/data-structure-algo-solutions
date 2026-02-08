@@ -2,6 +2,8 @@ package neetcode.slidingwindow
 
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Test
+import java.util.*
+import kotlin.collections.ArrayDeque
 
 
 class SlidingWindowMaximumBruteForce {
@@ -49,12 +51,35 @@ class SlidingWindowMaximumDeque {
     }
 }
 
+class SlidingWindowMaximumHeap {
+    //TC O(nlogn), SC O(n)
+    fun maxSlidingWindow(nums: IntArray, k: Int): IntArray {
+        if (nums.isEmpty()) return intArrayOf()
+
+        val heap = PriorityQueue<Pair<Int, Int>>(compareByDescending { it.first }) //nlog
+        val res = mutableListOf<Int>()
+        for (i in nums.indices) {
+            heap.add(Pair(nums[i], i))
+            if (i >= k - 1) {
+                //remove element from heap if it is outside of window
+                while (heap.peek().second <= i - k) {
+                    heap.poll()
+                }
+                //add max to result
+                res.add(heap.peek().first)
+            }
+
+        }
+        return res.toIntArray()
+    }
+}
+
 class SlidingWindowMaximumTest {
 
     private val impls: List<(IntArray, Int) -> IntArray> = listOf(
         //SlidingWindowMaximumBruteForce()::maxSlidingWindow,
-        SlidingWindowMaximumDeque()::maxSlidingWindow,
-//        SolutionMonotonicDeque()::maxSlidingWindow
+        // SlidingWindowMaximumDeque()::maxSlidingWindow,
+        SlidingWindowMaximumHeap()::maxSlidingWindow
     )
 
     @Test

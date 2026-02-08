@@ -3,34 +3,87 @@ package neetcode.stack
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-fun isValid(s: String): Boolean {
-    val stack = ArrayDeque<Char>()
-    val paris = mapOf(')' to '(', ']' to '[', '}' to '{')
-    s.forEach { ch ->
-        val need = paris[ch]
-        if (need != null) {
-            if (stack.removeLastOrNull() != need)
-                return false
-        } else {
-            stack.addLast(ch)
+class ValidParenthesesStackMap {
+    fun isValid(s: String): Boolean {
+        val stack = ArrayDeque<Char>()
+        val pairs = mapOf(')' to '(', '}' to '{', ']' to '[')
+        s.forEach { ch ->
+            val need = pairs[ch]
+            if (need != null) {
+                if (stack.removeLastOrNull() != need)
+                    return false
+            } else {
+                stack.addLast(ch)
+            }
         }
+        return stack.isEmpty()
     }
-    return stack.isEmpty()
 }
 
-class IsValidParentheses {
+
+class ValidParenthesesStack {
+    fun isValid(s: String): Boolean {
+        val stack = ArrayDeque<Char>()
+        s.forEach { ch ->
+            when (ch) {
+                '(', '{', '[' -> {
+                    stack.addLast(ch)
+                }
+
+                ')', '}', ']' -> {
+                    if (stack.isEmpty()) return false
+                    val open = stack.removeLast()
+                    if (!(open == '(' && ch == ')' || open == '{' && ch == '}' || open == '[' && ch == ']'))
+                        return false
+                }
+            }
+        }
+        return stack.isEmpty()
+    }
+}
+
+class ValidParenthesesTest {
+
+    private val impls: List<(String) -> Boolean> = listOf(
+        //ValidParenthesesStack()::isValid,
+        ValidParenthesesStackMap()::isValid
+    )
+
     @Test
-    fun test1() {
-        assertEquals(true, isValid("[]"))
+    fun examples() {
+        checkAll("()" to true)
+        checkAll("()[]{}" to true)
+        checkAll("(]" to false)
+        checkAll("([])" to true)
     }
 
     @Test
-    fun test2() {
-        assertEquals(true, isValid("([{}])"))
+    fun edgeCases() {
+        checkAll("" to true)
+        checkAll("(" to false)
+        checkAll("]" to false)
+        checkAll("([)]" to false)
+        checkAll("{[]}" to true)
     }
 
     @Test
-    fun test3() {
-        assertEquals(false, isValid("[(])"))
+    fun nestedAndLonger() {
+        checkAll("(((())))" to true)
+        checkAll("{[()()]}" to true)
+        checkAll("{[()()]}}" to false)
+        checkAll("({[]})" to true)
+        checkAll("({[})" to false)
+    }
+
+    private fun checkAll(vararg cases: Pair<String, Boolean>) {
+        for ((input, expected) in cases) {
+            impls.forEachIndexed { idx, f ->
+                val actual = f(input)
+                assertEquals(
+                    expected, actual,
+                    "impl#$idx failed for input=\"$input\"; expected=$expected, actual=$actual"
+                )
+            }
+        }
     }
 }
