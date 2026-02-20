@@ -41,12 +41,68 @@ class BinarySearch704Recursion {
 
 }
 
+class BinarySearch704UpperBound {
+    /*
+     //first index where value greater than the target appears
+     Why l > 0?
+     Because upperBound can return 0 when all elements are greater than target.
+     In that case l - 1 would be -1,
+     which is invalid. So we must guard against negative indexing.
+     */
+    fun search(nums: IntArray, target: Int): Int {
+        var l = 0
+        var r = nums.size //one past lastIndex
+        while (l < r) {
+            val mid = l + (r - l) / 2
+            when {
+                // now equality moves RIGHT, Upper Bound pushes equality to RIGHT
+                //<= target → move left boundary right
+                nums[mid] <= target -> l = mid + 1
+                else -> r = mid
+            }
+        }
+        return if (l > 0 && nums[l - 1] == target) l - 1
+        else -1
+    }
+}
+
+class BinarySearch704LowerBound {
+    /*
+    - first index where a value is greater than or equal the target
+    Lower Bound  →  if (x >= target)  r = mid
+    Upper Bound  →  if (x >  target)  r = mid
+    Lower bound allows equality, So equality stays on the LEFT side.
+    Upper bound rejects equality
+
+    THE REAL DIFFERENCE
+    Lower Bound keeps equality on LEFT:
+    >= target → shrink right
+    Upper Bound pushes equality to RIGHT:
+    <= target → move left boundary right
+    * */
+    fun search(nums: IntArray, target: Int): Int {
+        var l = 0
+        var r = nums.size
+        while (l < r) {
+            val mid = l + (r - l) / 2
+            when {
+                nums[mid] < target -> l = mid + 1
+                else -> r = mid // >= target → shrink right, now equality moves LEFT
+            }
+        }
+        return if (r < nums.size && nums[l] == target) l
+        else -1
+    }
+}
+
 
 class BinarySearch704Test {
 
     private val impls = listOf(
         // BinarySearch704Iterative()::search,
-        BinarySearch704Recursion()::search,
+        // BinarySearch704Recursion()::search,
+//        BinarySearch704UpperBound()::search,
+        BinarySearch704LowerBound()::search,
     )
 
     @Test
