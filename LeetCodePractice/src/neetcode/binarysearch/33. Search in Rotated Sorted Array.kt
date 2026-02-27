@@ -3,87 +3,92 @@ package neetcode.binarysearch
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-/********** solution 1: two pass BS *********************/
-fun search1(nums: IntArray, target: Int): Int {
-    var pivot = findPivotIndex(nums)
-    if (nums[pivot] <= target && target <= nums[nums.lastIndex])
-        return searchTarget(nums, target, pivot, nums.lastIndex)
-    else
-        return searchTarget(nums, target, 0, pivot - 1)
-}
-
-private fun findPivotIndex(nums: IntArray): Int {
-    var l = nums.indices.first
-    var r = nums.indices.last
-    while (l < r) {
-        val m = l + (r - l) / 2
-        if (nums[m] > nums[r])
-            l = m + 1 //search space is right part
-        else
-            r = m //search space is left part
-    }
-    return l
-}
-
-private fun searchTarget(nums: IntArray, target: Int, start: Int, end: Int): Int {
-    var l = start
-    var r = end
-    while (l <= r) {
-        val m = l + (r - l) / 2
-        if (nums[m] == target)
-            return m
-        if (nums[m] < target)
-            l = m + 1
-        else
-            r = m - 1
-    }
-    return -1
-}
-
-/********** end solution 1: two pass BS *********************/
-/********** solution 2: one pass BS *********************/
-
-fun search(nums: IntArray, target: Int): Int {
-    var l = nums.indices.first
-    var r = nums.indices.last
-    while (l <= r) {
-        val m = l + (r - l) / 2
-        when {
-            nums[m] == target -> return m
-            //if left half is sorted
-            nums[l] <= nums[m] -> {
-                if (target in nums[l]..nums[m])
-                    r = m - 1
-                else
-                    l = m + 1
-            }
-            //if right half is sorted
-            else -> {
-                if (target in nums[m]..nums[r])
-                    l = m + 1
-                else
-                    r = m - 1
+class FindMinimumInRotatedSortedArrayBruteForce {
+    fun findMin(nums: IntArray): Int {
+        var min = nums[0]
+        for (x in nums) {
+            if(x < min) {
+                min = x
             }
         }
+        return min
     }
-    return -1
 }
 
-/*******************/
+class FindMinimumInRotatedSortedArrayBinarySearchLowerBound {
+    fun findMin(nums: IntArray): Int {
+        var l = 0
+        var r = nums.lastIndex
+        while (l < r) {
+            val mid = l + (r - l) / 2
+            when {
+                nums[mid] > nums[r] -> l = mid + 1
+                else -> r = mid // <= , moves lower bound / Left
+            }
+        }
+        return nums[l]
+    }
+}
+class FindMinimumInRotatedSortedArrayTest {
 
-class BSearchTest {
+    private val impls = listOf(
+      //  FindMinimumInRotatedSortedArrayBruteForce()::findMin,
+        FindMinimumInRotatedSortedArrayBinarySearchLowerBound()::findMin,
+//        SolutionRecursive()::findMin,
+//        SolutionLinearScan()::findMin,
+    )
+
     @Test
-    fun test1() {
-        assertEquals(4, search(intArrayOf(4, 5, 6, 7, 0, 1, 2), 0))
+    fun example1() {
+        val nums = intArrayOf(3, 4, 5, 1, 2)
+        impls.forEach { f -> assertEquals(1, f(nums)) }
     }
 
     @Test
-    fun test2() {
-        assertEquals(-1, search(intArrayOf(4, 5, 6, 7, 0, 1, 2), 3))
+    fun example2() {
+        val nums = intArrayOf(4, 5, 6, 7, 0, 1, 2)
+        impls.forEach { f -> assertEquals(0, f(nums)) }
     }
 
     @Test
-    fun test3() {
-        assertEquals(1, search(intArrayOf(1, 3), 3))
+    fun example3_singleElement() {
+        val nums = intArrayOf(11)
+        impls.forEach { f -> assertEquals(11, f(nums)) }
+    }
+
+    @Test
+    fun notRotated_sortedArray() {
+        val nums = intArrayOf(1, 2, 3, 4, 5)
+        impls.forEach { f -> assertEquals(1, f(nums)) }
+    }
+
+    @Test
+    fun rotated_nearEnd() {
+        val nums = intArrayOf(2, 3, 4, 5, 1)
+        impls.forEach { f -> assertEquals(1, f(nums)) }
+    }
+
+    @Test
+    fun rotated_nearStart() {
+        val nums = intArrayOf(5, 1, 2, 3, 4)
+        impls.forEach { f -> assertEquals(1, f(nums)) }
+    }
+
+    @Test
+    fun twoElements_rotated() {
+        val nums = intArrayOf(2, 1)
+        impls.forEach { f -> assertEquals(1, f(nums)) }
+    }
+
+    @Test
+    fun twoElements_notRotated() {
+        val nums = intArrayOf(1, 2)
+        impls.forEach { f -> assertEquals(1, f(nums)) }
+    }
+
+    @Test
+    fun negativeValues_rotated() {
+        val nums = intArrayOf(0, 2, 5, -10, -3)
+        impls.forEach { f -> assertEquals(-10, f(nums)) }
     }
 }
