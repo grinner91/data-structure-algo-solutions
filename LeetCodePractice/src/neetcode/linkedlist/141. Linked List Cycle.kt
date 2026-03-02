@@ -4,137 +4,115 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class SolutionHasCycle {
-
-    fun hasCycle1(head: ListNode?): Boolean {
+/**
+ * Floyd's Tortoise & Hare (Two pointers)
+ * Time: O(n), Space: O(1)
+ */
+class LinkedListCycleFloyd {
+    fun hasCycle(head: ListNode?): Boolean {
         var slow = head
-        var fast = head
-        while (fast?.next != null) {
-            slow = slow?.next
+        var fast = head?.next
+        while (slow != null && fast != null) {
+            if (slow == fast) return true
+            slow = slow.next
             fast = fast.next?.next
-            if (slow == fast) {
-                return true
-            }
         }
         return false
     }
+}
 
+class LinkedListCycleHashSet {
     fun hasCycle(head: ListNode?): Boolean {
-        val seen = mutableSetOf<ListNode>()
+        val seen = HashSet<ListNode>()
         var cur = head
         while (cur != null) {
-            if (!seen.add(cur)) {
-                return true
-            }
+            if(!seen.add(cur)) return true
             cur = cur.next
         }
         return false
     }
-
 }
 
 
 class LinkedListCycleTest {
 
-    private val sut = SolutionHasCycle()
+    private val impls = listOf(
+        LinkedListCycleFloyd()::hasCycle,
+        LinkedListCycleHashSet()::hasCycle,
+    )
 
-    // Build a plain (acyclic) list
-    private fun buildList(vararg values: Int): ListNode? {
-        if (values.isEmpty()) return null
-        val head = ListNode(values[0])
-        var cur = head
-        for (i in 1 until values.size) {
-            cur.next = ListNode(values[i])
-            cur = cur.next!!
+    @Test
+    fun `empty list - no cycle`() {
+        impls.forEach { hasCycle ->
+            assertFalse(hasCycle(null))
         }
-        return head
     }
 
-    /**
-     * Build a list and optionally create a cycle by connecting the tail to node at index `pos`.
-     * pos == -1 -> no cycle (like LeetCode's convention)
-     */
-    private fun buildListWithCycle(values: IntArray, pos: Int): ListNode? {
-        if (values.isEmpty()) return null
-        val head = ListNode(values[0])
-        var cur = head
-        var cycleNode: ListNode? = if (pos == 0) head else null
-
-        for (i in 1 until values.size) {
-            cur.next = ListNode(values[i])
-            cur = cur.next!!
-            if (i == pos) cycleNode = cur
+    @Test
+    fun `single node no cycle`() {
+        impls.forEach { hasCycle ->
+            val head = ListNode(1)
+            assertFalse(hasCycle(head))
         }
-        if (pos >= 0) cur.next = cycleNode
-        return head
     }
 
     @Test
-    fun emptyList_false() {
-        val head: ListNode? = null
-        assertFalse(sut.hasCycle(head))
+    fun `single node with self cycle`() {
+        impls.forEach { hasCycle ->
+            val head = ListNode(1)
+            head.next = head
+            assertTrue(hasCycle(head))
+        }
     }
 
     @Test
-    fun singleNode_noCycle_false() {
-        val head = buildList(1)
-        assertFalse(sut.hasCycle(head))
+    fun `two nodes no cycle`() {
+        impls.forEach { hasCycle ->
+            val a = ListNode(1)
+            val b = ListNode(2)
+            a.next = b
+            assertFalse(hasCycle(a))
+        }
     }
 
     @Test
-    fun singleNode_selfCycle_true() {
-        val head = buildList(7)
-        head!!.next = head
-        assertTrue(sut.hasCycle(head))
+    fun `two nodes cycle back to head`() {
+        impls.forEach { hasCycle ->
+            val a = ListNode(1)
+            val b = ListNode(2)
+            a.next = b
+            b.next = a
+            assertTrue(hasCycle(a))
+        }
     }
 
     @Test
-    fun twoNodes_noCycle_false() {
-        val head = buildList(1, 2)
-        assertFalse(sut.hasCycle(head))
+    fun `cycle starts in the middle`() {
+        impls.forEach { hasCycle ->
+            // 3 -> 2 -> 0 -> -4
+            //           ^      |
+            //           |______|
+            val n3 = ListNode(3)
+            val n2 = ListNode(2)
+            val n0 = ListNode(0)
+            val n4 = ListNode(-4)
+
+            n3.next = n2
+            n2.next = n0
+            n0.next = n4
+            n4.next = n2
+
+            assertTrue(hasCycle(n3))
+        }
     }
 
     @Test
-    fun twoNodes_cycleToHead_true() {
-        val head = buildListWithCycle(intArrayOf(1, 2), pos = 0)
-        assertTrue(sut.hasCycle(head))
-    }
-
-    @Test
-    fun multiNodes_noCycle_false() {
-        val head = buildList(3, 2, 0, -4)
-        assertFalse(sut.hasCycle(head))
-    }
-
-    @Test
-    fun multiNodes_cycleToIndex2_true() {
-        // [3,2,0,-4], tail connects to index 2 (value = 0)
-        val head = buildListWithCycle(intArrayOf(3, 2, 0, -4), pos = 2)
-        assertTrue(sut.hasCycle(head))
-    }
-
-    @Test
-    fun cycleAtHead_true() {
-        // [1,2,3,4,5], tail -> index 0
-        val head = buildListWithCycle(intArrayOf(1, 2, 3, 4, 5), pos = 0)
-        assertTrue(sut.hasCycle(head))
-    }
-
-    @Test
-    fun largeList_noCycle_false() {
-        val arr = IntArray(1000) { it }
-        val head = buildList(*arr.toTypedArray().toIntArray())
-        assertFalse(sut.hasCycle(head))
-    }
-
-    @Test
-    fun largeList_cycleInMiddle_true() {
-        val arr = IntArray(1000) { it }
-        val head = buildListWithCycle(arr, pos = 500)
-        assertTrue(sut.hasCycle(head))
+    fun `longer list no cycle`() {
+        impls.forEach { hasCycle ->
+            val nodes = (1..10).map { ListNode(it) }
+            for (i in 0 until nodes.size - 1) nodes[i].next = nodes[i + 1]
+            assertFalse(hasCycle(nodes[0]))
+        }
     }
 }
-
-
-
 
