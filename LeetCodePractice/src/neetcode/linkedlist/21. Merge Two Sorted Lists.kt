@@ -49,7 +49,7 @@ class MergeTwoSortedListsIterativeDummyNode : MergeTwoSortedLists {
 
 /* ------------------------------ Test Helpers ------------------------------ */
 
-private fun buildList(values: IntArray): ListNode? {
+fun buildList(values: IntArray): ListNode? {
     val dummy = ListNode(0)
     var tail = dummy
     for (v in values) {
