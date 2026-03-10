@@ -59,11 +59,48 @@ class CopyListWithRandomPointerOnePass {
     }
 }
 
+class CopyListWithRandomPointerInterleaving {
+    fun copyRandomList(head: Node?): Node? {
+        if (head == null) return null
+        //copy list, and next
+        var cur = head
+        while (cur != null) {
+            val next = cur.next
+            val copy = Node(cur.`val`)
+            copy.next = next
+            cur.next = copy
+            cur = next
+        }
+        //assign copy.random point to new node
+        cur = head
+        while (cur != null) {
+            val copy = cur.next
+            copy?.random = cur.random?.next
+            cur = copy?.next
+        }
+        //restore original list, detach new list
+        cur = head
+        val dummy = Node(0)
+        var copyTail: Node? = dummy
+        while (cur != null) {
+            val copy = cur.next
+            val nextOld = copy?.next
+            copyTail?.next = copy
+            copyTail = copy
+            cur.next = nextOld
+            cur = nextOld
+        }
+
+        return dummy.next
+    }
+}
+
 class CopyListWithRandomPointerTest {
 
     private val impls = listOf(
-       // CopyListWithRandomPointerTwoPass()::copyRandomList,
-        CopyListWithRandomPointerOnePass()::copyRandomList
+        // CopyListWithRandomPointerTwoPass()::copyRandomList,
+        //CopyListWithRandomPointerOnePass()::copyRandomList,
+        CopyListWithRandomPointerInterleaving()::copyRandomList
     )
 
     @Test
