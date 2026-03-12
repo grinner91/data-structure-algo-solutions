@@ -21,6 +21,7 @@ class Codec {
     /**
      * Decodes a single string to a list of strings.
      */
+    //"21#ab...c1#k35#xy..."
     fun decode(s: String): List<String> {
         val res = mutableListOf<String>()
         var i = 0
@@ -28,17 +29,12 @@ class Codec {
         while (i < n) {
             var j = i
             while (j < n && s[j] != '#') j++
-            require(j < n) {
-                "invalid string"
-            }
-            val len = s.substring(i, j).toInt()
-            val start = j + 1
-            val endExclusive = start + len
-            require(endExclusive <= n) {
-                "invalid string"
-            }
-            res.add(s.substring(start, endExclusive))
-            i = endExclusive
+            //parse - str length until #,
+            val subLen = s.substring(i, j).toInt() //"21"
+            //parse - sub str "ab..."
+            i = j + 1
+            res.add(s.substring(i, i + subLen))
+            i += subLen
         }
         return res
     }
