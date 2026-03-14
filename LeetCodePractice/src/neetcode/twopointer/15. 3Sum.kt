@@ -35,6 +35,7 @@ class Solution3SumTwoPointers {
 class Solution3SumMapFrequency {
     fun threeSum(nums: IntArray): List<List<Int>> {
         nums.sort()
+        val n = nums.size
         val res = mutableListOf<List<Int>>()
         val freq = nums.asIterable().groupingBy { it }.eachCount().toMutableMap()
         fun dec(x: Int) {
@@ -51,7 +52,7 @@ class Solution3SumMapFrequency {
             val a = nums[i]
             if (i > 0 && a == nums[i - 1]) continue //skip duplicates
             dec(a) //remove one a
-            for (j in i + 1 until nums.size) {
+            for (j in i + 1 until n) {
                 val b = nums[j]
                 if (j > i + 1 && b == nums[j - 1]) continue //skip duplicates
                 dec(b) //remove one b
