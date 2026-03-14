@@ -14,7 +14,7 @@ class ContainWithMostWaterTwoPointers {
             val cur = min(height[l], height[r]) * (r - l)
             res = max(res, cur)
             when {
-                height[l] < height[r] -> l++
+                height[l] <= height[r] -> l++
                 else -> r--
             }
         }
