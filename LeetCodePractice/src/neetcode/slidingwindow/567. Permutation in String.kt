@@ -9,14 +9,14 @@ class PermutationInStringBrutForce {
     //n - s1.length
     //m - s2.length
     fun checkInclusion(s1: String, s2: String): Boolean {
-        val n = s1.length
-        val m = s2.length
-        if (n > m) return false
+        val n1 = s1.length
+        val n2 = s2.length
+        if (n1 > n2) return false
         val p1 = s1.toCharArray().sorted()
 //            .apply { sort() }
 //            .concatToString()
-        for (i in 0..(m - n)) {
-            val p2 = s2.substring(i, i + n)
+        for (i in 0..(n2 - n1)) {
+            val p2 = s2.substring(i, i + n1)
                 .toCharArray().sorted()
 //                .apply { sort() }
 //                .concatToString()
@@ -30,16 +30,18 @@ class PermutationInStringBrutForce {
 class PermutationInStringFreqHashTable {
     //TC O(n * m) , SC O(n)
     fun checkInclusion(s1: String, s2: String): Boolean {
-        if (s1.length > s2.length) return false
+        val n1 = s1.length
+        val n2 = s2.length
+        if (n1 > n2) return false
         val freq1 = HashMap<Char, Int>()
         for (ch in s1) {
             freq1[ch] = (freq1[ch] ?: 0) + 1
         }
 
-        for (i in s2.indices) {
+        for (i in 0 until n2) {
             val freq2 = HashMap<Char, Int>()
             var match = 0
-            for (j in i until s2.length) {
+            for (j in i until n2) {
                 val ch = s2[j]
                 freq2[ch] = (freq2[ch] ?: 0) + 1
                 if ((freq2[ch] ?: 0) > (freq1[ch] ?: 0)) break
