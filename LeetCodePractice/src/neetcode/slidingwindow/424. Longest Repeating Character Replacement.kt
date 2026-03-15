@@ -43,6 +43,7 @@ class LongestRepeatingCharacterReplacementSlidingWindowOptimal {
             while ((r - l + 1 - maxFre) > k) {
                 freq[s[l]] = (freq[s[l]] ?: 0) - 1
                 l++
+                maxFre = freq.maxOf { it.value }
             }
             res = maxOf(res, r - l + 1)
         }
@@ -53,7 +54,7 @@ class LongestRepeatingCharacterReplacementSlidingWindowOptimal {
 class LongestRepeatingCharacterReplacementTest {
 
     private val impls = listOf(
-        LongestRepeatingCharacterReplacementBrutForce()::characterReplacement,
+        //LongestRepeatingCharacterReplacementBrutForce()::characterReplacement,
         LongestRepeatingCharacterReplacementSlidingWindowOptimal()::characterReplacement,
 //        SolutionSlidingWindow()::characterReplacement,
     )
