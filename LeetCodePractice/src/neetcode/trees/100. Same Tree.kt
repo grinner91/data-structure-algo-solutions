@@ -1,53 +1,181 @@
 package neetcode.trees
 
-class SolutionIsSameTree {
-//    //DFS
-//    fun isSameTree(p: TreeNode?, q: TreeNode?): Boolean {
-//        if (p == null && q == null) return true
-//        if (p != null && q != null && p.`val` == q.`val`) {
-//            val left = isSameTree(p.left, q.left)
-//            val right = isSameTree(p.right, q.right)
-//            return left && right
-//        }
-//        return false
-//    }
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-    //iterative DFS
-//    fun isSameTree(p: TreeNode?, q: TreeNode?): Boolean {
-//        val deq = ArrayDeque<Pair<TreeNode?, TreeNode?>>()
-//        deq.addLast(Pair(p, q))
-//        while (deq.isNotEmpty()) {
-//            val (n1, n2) = deq.removeFirst()
-//            if (n1 == null && n2 == null) continue
-//            if (n1 == null || n2 == null || n1.`val` != n2.`val`) {
-//                return false
-//            }
-//            deq.addLast(Pair(n1.left, n2.left))
-//            deq.addLast(Pair(n1.right, n2.right))
-//        }
-//        return true
-//    }
+data class TreeNode(
+    var `val`: Int,
+    var left: TreeNode? = null,
+    var right: TreeNode? = null
+)
 
-    //BFS traverse
+class SameTreeRecursiveDfs {
     fun isSameTree(p: TreeNode?, q: TreeNode?): Boolean {
-        val q1 = ArrayDeque<TreeNode?>()
-        val q2 = ArrayDeque<TreeNode?>()
-        q1.addLast(p)
-        q2.addLast(q)
+        if (p == null && q == null) return true
+        if (p == null || q == null) return false
+        if (p.`val` != q.`val`) return false
+        return isSameTree(p.left, q.left) && isSameTree(p.right, q.right)
+    }
+}
 
-        while (q1.isNotEmpty() && q2.isNotEmpty()) {
-            for (i in q1.size downTo 1) {
-                val n1 = q1.removeFirst()
-                val n2 = q2.removeFirst()
-                if(n1 == null || n2 == null || n1.`val` != n2.`val`) {
-                    return false
-                }
-                q1.addLast(n1.left)
-                q1.addLast(n1.right)
-                q2.addLast(n2.left)
-                q2.addLast(n2.right)
+class SameTreeIterativeDfs {
+    fun isSameTree(p: TreeNode?, q: TreeNode?): Boolean {
+        if (p == null && q == null) return true
+        if (p == null || q == null) return false
+
+        val stack = ArrayDeque<Pair<TreeNode?, TreeNode?>>()
+        stack.addLast(p to q)
+
+        while (stack.isNotEmpty()) {
+            val (a, b) = stack.removeLast()
+            if (a == null || b == null) {
+                if (a != b) return false
+                continue
             }
+            if (a.`val` != b.`val`) return false
+
+            stack.addLast(a.left to b.left)
+            stack.addLast(a.right to b.right)
         }
         return true
+    }
+}
+
+class SameTreeTest {
+
+    private val impls = listOf(
+        SameTreeIterativeDfs()::isSameTree,
+    )
+
+    @Test
+    fun `both trees null`() {
+        impls.forEach { f ->
+            assertTrue(f(null, null))
+        }
+    }
+
+    @Test
+    fun `one tree null`() {
+        val root = node(1)
+
+        impls.forEach { f ->
+            assertFalse(f(root, null))
+            assertFalse(f(null, root))
+        }
+    }
+
+    @Test
+    fun `single node same value`() {
+        val p = node(1)
+        val q = node(1)
+
+        impls.forEach { f ->
+            assertTrue(f(p, q))
+        }
+    }
+
+    @Test
+    fun `single node different value`() {
+        val p = node(1)
+        val q = node(2)
+
+        impls.forEach { f ->
+            assertFalse(f(p, q))
+        }
+    }
+
+    @Test
+    fun `same structure same values`() {
+        val p = tree(1, 2, 3)
+        val q = tree(1, 2, 3)
+
+        impls.forEach { f ->
+            assertTrue(f(p, q))
+        }
+    }
+
+    @Test
+    fun `same values different structure`() {
+        val p = tree(1, 2, null)
+        val q = tree(1, null, 2)
+
+        impls.forEach { f ->
+            assertFalse(f(p, q))
+        }
+    }
+
+    @Test
+    fun `different values same structure`() {
+        val p = tree(1, 2, 3)
+        val q = tree(1, 2, 4)
+
+        impls.forEach { f ->
+            assertFalse(f(p, q))
+        }
+    }
+
+    @Test
+    fun `deep identical trees`() {
+        val p = tree(1, 2, 3, 4, 5, 6, 7)
+        val q = tree(1, 2, 3, 4, 5, 6, 7)
+
+        impls.forEach { f ->
+            assertTrue(f(p, q))
+        }
+    }
+
+    @Test
+    fun `deep trees differ at leaf`() {
+        val p = tree(1, 2, 3, 4, 5, 6, 7)
+        val q = tree(1, 2, 3, 4, 5, 6, 8)
+
+        impls.forEach { f ->
+            assertFalse(f(p, q))
+        }
+    }
+
+    @Test
+    fun `asymmetric trees`() {
+        val p = tree(1, 2, 3, null, 4)
+        val q = tree(1, 2, 3, 4, null)
+
+        impls.forEach { f ->
+            assertFalse(f(p, q))
+        }
+    }
+
+    private fun node(value: Int, left: TreeNode? = null, right: TreeNode? = null) =
+        TreeNode(value, left, right)
+
+    /**
+     * Build tree from level order values
+     */
+    private fun tree(vararg values: Int?): TreeNode? {
+        if (values.isEmpty() || values[0] == null) return null
+
+        val root = TreeNode(values[0]!!)
+        val queue = ArrayDeque<TreeNode>()
+        queue.addLast(root)
+
+        var i = 1
+
+        while (i < values.size && queue.isNotEmpty()) {
+            val curr = queue.removeFirst()
+
+            if (i < values.size && values[i] != null) {
+                curr.left = TreeNode(values[i]!!)
+                queue.addLast(curr.left!!)
+            }
+            i++
+
+            if (i < values.size && values[i] != null) {
+                curr.right = TreeNode(values[i]!!)
+                queue.addLast(curr.right!!)
+            }
+            i++
+        }
+
+        return root
     }
 }
