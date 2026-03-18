@@ -1,9 +1,5 @@
 package neetcode.trees
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
-import java.util.*
-
 /**
  * Definition for a binary tree node.
  * class TreeNode(var `val`: Int = 0) {
@@ -12,132 +8,187 @@ import java.util.*
  * }
  */
 
-class SolutionLowestCommonAncestor {
-    //iterative solution
+
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
+
+class LowestCommonAncestorRecursive {
     fun lowestCommonAncestor(root: TreeNode?, p: TreeNode?, q: TreeNode?): TreeNode? {
         if (root == null || p == null || q == null) return null
-        val maxPq = maxOf(p.`val`, q.`val`)
-        val minPq = minOf(p.`val`, q.`val`)
 
+        return when {
+            maxOf(p.`val`, q.`val`) < root.`val` -> lowestCommonAncestor(root.left, p, q)
+            minOf(p.`val`, q.`val`) > root.`val` -> lowestCommonAncestor(root.right, p, q)
+            else -> root
+        }
+    }
+}
+
+class LowestCommonAncestorIterative {
+    fun lowestCommonAncestor(root: TreeNode?, p: TreeNode?, q: TreeNode?): TreeNode? {
+        if (root == null || p == null || q == null) return null
         var cur = root
         while (cur != null) {
             cur = when {
-                maxPq < cur.`val` -> cur.left
-                minPq > cur.`val` -> cur.right
+                p.`val` < cur.`val` && q.`val` < cur.`val` -> cur.left
+                p.`val` > cur.`val` && q.`val` > cur.`val` -> cur.right
                 else -> return cur
             }
         }
         return null
     }
-
-//    //DFS recursion
-//    fun lowestCommonAncestor(root: TreeNode?, p: TreeNode?, q: TreeNode?): TreeNode? {
-//        if (root == null || p == null || q == null) return null
-//        return when {
-//            maxOf(p.`val`, q.`val`) < root.`val` -> {
-//                lowestCommonAncestor(root.left, p, q)
-//            }
-//
-//            minOf(p.`val`, q.`val`) > root.`val` -> {
-//                lowestCommonAncestor(root.right, p, q)
-//            }
-//
-//            else -> root
-//        }
-//    }
-
-
 }
 
 
-// ---- Remove this when running on LeetCode (they provide TreeNode) ----
-//class TreeNode(var `val`: Int) { var left: TreeNode? = null; var right: TreeNode? = null }
-// ---------------------------------------------------------------------
+class LowestCommonAncestorBstTest {
 
-class LowestCommonAncestorBSTTest {
+    private val impls = listOf(
+        LowestCommonAncestorRecursive()::lowestCommonAncestor,
+    )
 
-    private val sut = SolutionLowestCommonAncestor()
+    @Test
+    fun example1() {
+        val root = bst(
+            6,
+            2, 8,
+            0, 4, 7, 9,
+            null, null, 3, 5
+        )
 
-    // Build BST from level-order with nulls (use LeetCode-style arrays)
-    private fun buildLevelOrder(vararg vals: Int?): TreeNode? {
-        if (vals.isEmpty() || vals[0] == null) return null
-        val root = TreeNode(vals[0]!!)
-        val q: ArrayDeque<TreeNode> = ArrayDeque()
-        q.add(root)
-        var i = 1
-        while (q.isNotEmpty() && i < vals.size) {
-            val node = q.removeFirst()
-            if (i < vals.size) {
-                vals[i]?.let { node.left = TreeNode(it); q.add(node.left!!) }
-                i++
-            }
-            if (i < vals.size) {
-                vals[i]?.let { node.right = TreeNode(it); q.add(node.right!!) }
-                i++
-            }
+        val p = find(root, 2)
+        val q = find(root, 8)
+
+        impls.forEach { f ->
+            assertEquals(6, f(root, p, q)?.`val`)
         }
-        return root
     }
 
-    // Find node by value using BST property (values are unique in these tests)
+    @Test
+    fun example2() {
+        val root = bst(
+            6,
+            2, 8,
+            0, 4, 7, 9,
+            null, null, 3, 5
+        )
+
+        val p = find(root, 2)
+        val q = find(root, 4)
+
+        impls.forEach { f ->
+            assertEquals(2, f(root, p, q)?.`val`)
+        }
+    }
+
+    @Test
+    fun singleNodeTree() {
+        val root = bst(2)
+        val p = find(root, 2)
+        val q = find(root, 2)
+
+        impls.forEach { f ->
+            assertEquals(2, f(root, p, q)?.`val`)
+        }
+    }
+
+    @Test
+    fun rootIsLcaWhenNodesSplitAtRoot() {
+        val root = bst(10, 5, 15, 3, 7, 12, 18)
+        val p = find(root, 3)
+        val q = find(root, 12)
+
+        impls.forEach { f ->
+            assertEquals(10, f(root, p, q)?.`val`)
+        }
+    }
+
+    @Test
+    fun oneNodeIsAncestorOfOther() {
+        val root = bst(10, 5, 15, 3, 7, 12, 18, 1, 4)
+        val p = find(root, 5)
+        val q = find(root, 4)
+
+        impls.forEach { f ->
+            assertEquals(5, f(root, p, q)?.`val`)
+        }
+    }
+
+    @Test
+    fun bothNodesInLeftSubtree() {
+        val root = bst(20, 10, 30, 5, 15, 25, 35, 3, 7, 13, 17)
+        val p = find(root, 13)
+        val q = find(root, 17)
+
+        impls.forEach { f ->
+            assertEquals(15, f(root, p, q)?.`val`)
+        }
+    }
+
+    @Test
+    fun bothNodesInRightSubtree() {
+        val root = bst(20, 10, 30, 5, 15, 25, 35, null, null, null, null, 22, 27)
+        val p = find(root, 22)
+        val q = find(root, 27)
+
+        impls.forEach { f ->
+            assertEquals(25, f(root, p, q)?.`val`)
+        }
+    }
+
+    @Test
+    fun nullRootReturnsNull() {
+        impls.forEach { f ->
+            assertNull(f(null, TreeNode(1), TreeNode(2)))
+        }
+    }
+
+    @Test
+    fun nullPReturnsNull() {
+        val root = bst(2, 1, 3)
+
+        impls.forEach { f ->
+            assertNull(f(root, null, find(root, 3)))
+        }
+    }
+
+    @Test
+    fun nullQReturnsNull() {
+        val root = bst(2, 1, 3)
+
+        impls.forEach { f ->
+            assertNull(f(root, find(root, 1), null))
+        }
+    }
+
+    private fun bst(vararg values: Int?): TreeNode? {
+        if (values.isEmpty() || values[0] == null) return null
+
+        val nodes = values.map { it?.let(::TreeNode) }
+
+        for (i in nodes.indices) {
+            val node = nodes[i] ?: continue
+            val leftIndex = 2 * i + 1
+            val rightIndex = 2 * i + 2
+
+            if (leftIndex < nodes.size) node.left = nodes[leftIndex]
+            if (rightIndex < nodes.size) node.right = nodes[rightIndex]
+        }
+
+        return nodes[0]
+    }
+
     private fun find(root: TreeNode?, target: Int): TreeNode? {
-        var cur = root
-        while (cur != null) {
-            cur = when {
-                target == cur.`val` -> return cur
-                target < cur.`val` -> cur.left
-                else -> cur.right
+        var curr = root
+
+        while (curr != null) {
+            curr = when {
+                target < curr.`val` -> curr.left
+                target > curr.`val` -> curr.right
+                else -> return curr
             }
         }
+
         return null
     }
-
-    private fun assertLcaVal(root: TreeNode?, pVal: Int, qVal: Int, expectedVal: Int) {
-        val p = find(root, pVal)!!
-        val q = find(root, qVal)!!
-        val lca = sut.lowestCommonAncestor(root, p, q)
-        assertEquals(expectedVal, lca?.`val`)
-    }
-
-    @Test
-    fun example_1_root_is_lca() {
-        // root = [6,2,8,0,4,7,9,null,null,3,5], p=2, q=8 -> LCA=6
-        val root = buildLevelOrder(6, 2, 8, 0, 4, 7, 9, null, null, 3, 5)
-        assertLcaVal(root, 2, 8, 6)
-    }
-
-    @Test
-    fun example_2_one_is_ancestor_of_other() {
-        // same tree, p=2, q=4 -> LCA=2
-        val root = buildLevelOrder(6, 2, 8, 0, 4, 7, 9, null, null, 3, 5)
-        assertLcaVal(root, 2, 4, 2)
-    }
-
-    @Test
-    fun example_3_two_nodes_in_small_bst() {
-        // root = [2,1], p=2, q=1 -> LCA=2
-        val root = buildLevelOrder(2, 1)
-        assertLcaVal(root, 2, 1, 2)
-    }
-
-    @Test
-    fun both_on_left_subtree_lca_not_root() {
-        val root = buildLevelOrder(6, 2, 8, 0, 4, 7, 9, null, null, 3, 5)
-        // p=0, q=5 -> LCA=2
-        assertLcaVal(root, 0, 5, 2)
-    }
-
-    @Test
-    fun same_node_as_both_inputs() {
-        val root = buildLevelOrder(6, 2, 8, 0, 4, 7, 9, null, null, 3, 5)
-        assertLcaVal(root, 4, 4, 4)
-    }
-
-    @Test
-    fun root_is_one_of_nodes() {
-        val root = buildLevelOrder(6, 2, 8)
-        assertLcaVal(root, 6, 8, 6)
-    }
 }
-
-
