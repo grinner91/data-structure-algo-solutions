@@ -15,32 +15,25 @@ import java.util.*
  *     var right: TreeNode? = null
  * }
  */
-class SolutionIsSubtree {
+class SolutionRecursiveCompare {
     fun isSubtree(root: TreeNode?, subRoot: TreeNode?): Boolean {
         if (subRoot == null) return true
         if (root == null) return false
-        if (isSameTree(root, subRoot)) return true
-        return isSubtree(root.left, subRoot) || isSubtree(root.right, subRoot)
+        return isSameTree(root, subRoot) ||
+                isSubtree(root.left, subRoot) ||
+                isSubtree(root.right, subRoot)
     }
 
-    private fun isSameTree(root: TreeNode?, subRoot: TreeNode?): Boolean {
-        if (root == null && subRoot == null) return true
-        if (root != null && subRoot != null && root.`val` == subRoot.`val`) {
-            return isSameTree(root.left, subRoot.left) && isSameTree(root.right, subRoot.right)
-        }
-        return false
+    private fun isSameTree(a: TreeNode?, b: TreeNode?): Boolean {
+        if (a == null || b == null) return a == b
+        if (a.`val` != b.`val`) return false
+        return isSameTree(a.left, b.left) && isSameTree(a.right, b.right)
     }
-
 }
-
-
-// ---- Remove this when running on LeetCode (they provide TreeNode) ----
-//class TreeNode(var `val`: Int) { var left: TreeNode? = null; var right: TreeNode? = null }
-// ---------------------------------------------------------------------
 
 class SubtreeOfAnotherTreeTests {
 
-    private val dfs = SolutionIsSubtree()
+    private val dfs = SolutionRecursiveCompare()
 
     // Build a binary tree from level-order values; nulls allowed (e.g., 3,4,5,1,2,null,null)
     private fun buildLevelOrder(vararg vals: Int?): TreeNode? {
