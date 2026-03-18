@@ -14,10 +14,10 @@ import org.junit.jupiter.api.Test
  * }
  */
 
-class TreeNode(var `val`: Int) {
-    var left: TreeNode? = null
-    var right: TreeNode? = null
-}
+//class TreeNode(var `val`: Int) {
+//    var left: TreeNode? = null
+//    var right: TreeNode? = null
+//}
 
 class InvertBinaryTreeRecursiveDfs {
     fun invertTree(root: TreeNode?): TreeNode? {
