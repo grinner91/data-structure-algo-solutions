@@ -14,12 +14,32 @@ import java.util.*
  *     var right: TreeNode? = null
  * }
  */
-class SolutionLevelOrder {
+
+class BinaryTreeLevelOrderTraversalRecursiveDFS {
     fun levelOrder(root: TreeNode?): List<List<Int>> {
-        val result = mutableListOf<List<Int>>()
-        if (root == null) return result
+        val res = mutableListOf<MutableList<Int>>()
+        fun dfs(node: TreeNode?, depth: Int) {
+            if (node == null) return
+            if (res.size == depth) {
+                res.add(mutableListOf())
+            }
+            res[depth].add(node.`val`)
+            dfs(node.left, depth + 1)
+            dfs(node.right, depth + 1)
+        }
+        dfs(root, 0)
+        return res
+    }
+}
+
+class BinaryTreeLevelOrderTraversalBFS {
+    fun levelOrder(root: TreeNode?): List<List<Int>> {
+        if (root == null) return emptyList()
+
+        val res = mutableListOf<MutableList<Int>>()
         val que = ArrayDeque<TreeNode>()
         que.addLast(root)
+
         while (que.isNotEmpty()) {
             val size = que.size
             val nodes = mutableListOf<Int>()
@@ -29,12 +49,12 @@ class SolutionLevelOrder {
                 cur.left?.let { que.addLast(it) }
                 cur.right?.let { que.addLast(it) }
             }
-            result.add(nodes)
+            res.add(nodes)
         }
-        return result
+
+        return res
     }
 }
-
 
 // ---- Remove this when running on LeetCode (they provide TreeNode) ----
 //class TreeNode(var `val`: Int) { var left: TreeNode? = null; var right: TreeNode? = null }
@@ -42,7 +62,7 @@ class SolutionLevelOrder {
 
 class BinaryTreeLevelOrderTraversalTest {
 
-    private val sut = SolutionLevelOrder()
+    private val sut = BinaryTreeLevelOrderTraversalBFS()
 
     // Build a tree from level-order values (nulls allowed)
     private fun buildLevelOrder(vararg vals: Int?): TreeNode? {
