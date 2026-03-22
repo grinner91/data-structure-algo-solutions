@@ -1,204 +1,193 @@
 package neetcode.trees
 
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import java.util.*
 
-/**
- * Example:
- * var ti = TreeNode(5)
- * var v = ti.`val`
- * Definition for a binary tree node.
- * class TreeNode(var `val`: Int) {
- *     var left: TreeNode? = null
- *     var right: TreeNode? = null
- * }
- *
- * Input: preorder = [1,2,3,4], inorder = [2,1,3,4]
- * Output: [1,2,3,null,null,null,4]
- */
-
-class SolutionBuildTree {
-    //DFS Optimal, TC O(n), SC O(n)
+class ConstructBinaryTreeFromPreorderAndInorderTraversalDfs {
     fun buildTree(preorder: IntArray, inorder: IntArray): TreeNode? {
-        if (preorder.isEmpty()) return null
-        val inorderMap = inorder.withIndex().associate { (i, v) -> v to i }
-        var pre = preorder.indices.first
-        fun buildDfs(left: Int, right: Int): TreeNode? {
-            if (left > right) return null
-            val root = TreeNode(preorder[pre++])
-            val mid = inorderMap[root.`val`]!!
-            root.left = buildDfs(left, mid - 1)
-            root.right = buildDfs(mid + 1, right)
-            return root
-        }
-        return buildDfs(inorder.indices.first, inorder.indices.last)
-    }
-
-    //DFS, TC: O(n^2), SC: O(n^2)
-    fun buildTree1(preorder: IntArray, inorder: IntArray): TreeNode? {
         if (preorder.isEmpty() || inorder.isEmpty()) return null
         val root = TreeNode(preorder[0])
-        val midIdx = inorder.indexOf(root.`val`)
-
-        root.left = buildTree1(
-            preorder.slice(1..midIdx).toIntArray(),
-            inorder.slice(0 until midIdx).toIntArray()
+        val mid = inorder.indexOf(preorder[0])
+        root.left = buildTree(
+            preorder.slice(1..mid).toIntArray(),
+            inorder.slice(0 until mid).toIntArray()
         )
 
-        root.right = buildTree1(
-            preorder.slice(midIdx + 1 until preorder.size).toIntArray(),
-            inorder.slice(midIdx + 1 until inorder.size).toIntArray()
+        root.right = buildTree(
+            preorder.slice(mid + 1 until preorder.size).toIntArray(),
+            inorder.slice(mid + 1 until inorder.size).toIntArray()
         )
-
         return root
     }
 }
 
-
-// ---- Remove this when running on LeetCode (they provide TreeNode) ----
-//class TreeNode(var `val`: Int) { var left: TreeNode? = null; var right: TreeNode? = null }
-// ---------------------------------------------------------------------
-
-class ConstructTreeFromPreInorderTest {
-
-    private val sut = SolutionBuildTree()
-
-    // --- Helpers ---
-    private fun preorderList(root: TreeNode?): List<Int> {
-        val out = mutableListOf<Int>()
-        fun dfs(n: TreeNode?) {
-            if (n == null) return
-            out += n.`val`
-            dfs(n.left)
-            dfs(n.right)
+class ConstructBinaryTreeFromPreorderAndInorderTraversalRecursiveOptimal {
+    fun buildTree(preorder: IntArray, inorder: IntArray): TreeNode? {
+        val indices = inorder.withIndex().associate { (i, v) -> v to i }
+        var preIdx = 0
+        fun dfs(l: Int, r: Int): TreeNode? {
+            if (l > r) return null
+            val value = preorder[preIdx++]
+            val root = TreeNode(value)
+            val mid = indices[value]!!
+            root.left = dfs(l, mid - 1)
+            root.right = dfs(mid + 1, r)
+            return root
         }
-        dfs(root)
-        return out
+        return dfs(0, inorder.lastIndex)
+    }
+}
+
+class ConstructBinaryTreeFromPreorderAndInorderTraversalTest {
+
+    private val impls = listOf(
+//        ConstructBinaryTreeFromPreorderAndInorderTraversalDfs()::buildTree,
+        ConstructBinaryTreeFromPreorderAndInorderTraversalRecursiveOptimal()::buildTree
+    )
+
+    @Test
+    fun example1() {
+        val preorder = intArrayOf(3, 9, 20, 15, 7)
+        val inorder = intArrayOf(9, 3, 15, 20, 7)
+
+        impls.forEach { buildTree ->
+            val root = buildTree(preorder, inorder)
+
+            assertArrayEquals(preorder, preorderTraversal(root).toIntArray())
+            assertArrayEquals(inorder, inorderTraversal(root).toIntArray())
+            assertEquals(
+                listOf(3, 9, 20, null, null, 15, 7),
+                levelOrderWithNulls(root)
+            )
+        }
     }
 
-    private fun inorderList(root: TreeNode?): List<Int> {
-        val out = mutableListOf<Int>()
-        fun dfs(n: TreeNode?) {
-            if (n == null) return
-            dfs(n.left)
-            out += n.`val`
-            dfs(n.right)
+    @Test
+    fun singleNode() {
+        val preorder = intArrayOf(1)
+        val inorder = intArrayOf(1)
+
+        impls.forEach { buildTree ->
+            val root = buildTree(preorder, inorder)
+
+            assertArrayEquals(preorder, preorderTraversal(root).toIntArray())
+            assertArrayEquals(inorder, inorderTraversal(root).toIntArray())
+            assertEquals(listOf(1), levelOrderWithNulls(root))
         }
-        dfs(root)
-        return out
     }
 
-    private fun levelOrder(root: TreeNode?): List<List<Int>> {
+    @Test
+    fun leftSkewedTree() {
+        val preorder = intArrayOf(4, 3, 2, 1)
+        val inorder = intArrayOf(1, 2, 3, 4)
+
+        impls.forEach { buildTree ->
+            val root = buildTree(preorder, inorder)
+
+            assertArrayEquals(preorder, preorderTraversal(root).toIntArray())
+            assertArrayEquals(inorder, inorderTraversal(root).toIntArray())
+            assertEquals(
+                listOf(4, 3, null, 2, null, 1),
+                levelOrderWithNulls(root)
+            )
+        }
+    }
+
+    @Test
+    fun rightSkewedTree() {
+        val preorder = intArrayOf(1, 2, 3, 4)
+        val inorder = intArrayOf(1, 2, 3, 4)
+
+        impls.forEach { buildTree ->
+            val root = buildTree(preorder, inorder)
+
+            assertArrayEquals(preorder, preorderTraversal(root).toIntArray())
+            assertArrayEquals(inorder, inorderTraversal(root).toIntArray())
+            assertEquals(
+                listOf(1, null, 2, null, 3, null, 4),
+                levelOrderWithNulls(root)
+            )
+        }
+    }
+
+    @Test
+    fun balancedTree() {
+        val preorder = intArrayOf(8, 4, 2, 6, 12, 10, 14)
+        val inorder = intArrayOf(2, 4, 6, 8, 10, 12, 14)
+
+        impls.forEach { buildTree ->
+            val root = buildTree(preorder, inorder)
+
+            assertArrayEquals(preorder, preorderTraversal(root).toIntArray())
+            assertArrayEquals(inorder, inorderTraversal(root).toIntArray())
+            assertEquals(
+                listOf(8, 4, 12, 2, 6, 10, 14),
+                levelOrderWithNulls(root)
+            )
+        }
+    }
+
+    @Test
+    fun emptyTree() {
+        val preorder = intArrayOf()
+        val inorder = intArrayOf()
+
+        impls.forEach { buildTree ->
+            val root = buildTree(preorder, inorder)
+            assertNull(root)
+        }
+    }
+
+    private fun preorderTraversal(root: TreeNode?): List<Int> {
+        val result = mutableListOf<Int>()
+
+        fun dfs(node: TreeNode?) {
+            if (node == null) return
+            result.add(node.`val`)
+            dfs(node.left)
+            dfs(node.right)
+        }
+
+        dfs(root)
+        return result
+    }
+
+    private fun inorderTraversal(root: TreeNode?): List<Int> {
+        val result = mutableListOf<Int>()
+
+        fun dfs(node: TreeNode?) {
+            if (node == null) return
+            dfs(node.left)
+            result.add(node.`val`)
+            dfs(node.right)
+        }
+
+        dfs(root)
+        return result
+    }
+
+    private fun levelOrderWithNulls(root: TreeNode?): List<Int?> {
         if (root == null) return emptyList()
-        val res = mutableListOf<List<Int>>()
-        val q: ArrayDeque<TreeNode> = ArrayDeque()
-        q.add(root)
-        while (q.isNotEmpty()) {
-            val size = q.size
-            val level = ArrayList<Int>(size)
-            repeat(size) {
-                val n = q.removeFirst()
-                level += n.`val`
-                n.left?.let(q::add)
-                n.right?.let(q::add)
+
+        val result = mutableListOf<Int?>()
+        val queue = ArrayDeque<TreeNode?>()
+        queue.addLast(root)
+
+        while (queue.isNotEmpty()) {
+            val node = queue.removeFirst()
+            if (node == null) {
+                result.add(null)
+            } else {
+                result.add(node.`val`)
+                queue.addLast(node.left)
+                queue.addLast(node.right)
             }
-            res += level
         }
-        return res
-    }
 
-    // --- Tests ---
+        while (result.isNotEmpty() && result.last() == null) {
+            result.removeAt(result.lastIndex)
+        }
 
-    @Test
-    fun empty_arrays_return_null() {
-        val root = sut.buildTree(intArrayOf(), intArrayOf())
-        assertEquals(emptyList<Int>(), preorderList(root))
-        assertEquals(emptyList<Int>(), inorderList(root))
-    }
-
-    @Test
-    fun single_node() {
-        val pre = intArrayOf(1)
-        val ino = intArrayOf(1)
-        val root = sut.buildTree(pre, ino)
-        assertEquals(listOf(1), preorderList(root))
-        assertEquals(listOf(1), inorderList(root))
-        assertEquals(listOf(listOf(1)), levelOrder(root))
-    }
-
-    @Test
-    fun leetcode_example() {
-        // preorder = [3,9,20,15,7], inorder = [9,3,15,20,7]
-        val pre = intArrayOf(3, 9, 20, 15, 7)
-        val ino = intArrayOf(9, 3, 15, 20, 7)
-        val root = sut.buildTree(pre, ino)
-
-        // Traversals must match inputs
-        assertEquals(pre.toList(), preorderList(root))
-        assertEquals(ino.toList(), inorderList(root))
-
-        // Also check expected level order shape
-        val expectedLevels = listOf(listOf(3), listOf(9, 20), listOf(15, 7))
-        assertEquals(expectedLevels, levelOrder(root))
-    }
-
-    @Test
-    fun left_skewed_tree() {
-        // Tree:    3
-        //         /
-        //        2
-        //       /
-        //      1
-        val pre = intArrayOf(3, 2, 1)
-        val ino = intArrayOf(1, 2, 3)
-        val root = sut.buildTree(pre, ino)
-        assertEquals(pre.toList(), preorderList(root))
-        assertEquals(ino.toList(), inorderList(root))
-        assertEquals(listOf(listOf(3), listOf(2), listOf(1)), levelOrder(root))
-    }
-
-    @Test
-    fun right_skewed_tree() {
-        // Tree: 1
-        //        \
-        //         2
-        //          \
-        //           3
-        val pre = intArrayOf(1, 2, 3)
-        val ino = intArrayOf(1, 2, 3)
-        val root = sut.buildTree(pre, ino)
-        assertEquals(pre.toList(), preorderList(root))
-        assertEquals(ino.toList(), inorderList(root))
-        assertEquals(listOf(listOf(1), listOf(2), listOf(3)), levelOrder(root))
-    }
-
-    @Test
-    fun balanced_three_nodes() {
-        // Tree:   2
-        //        / \
-        //       1   3
-        val pre = intArrayOf(2, 1, 3)
-        val ino = intArrayOf(1, 2, 3)
-        val root = sut.buildTree(pre, ino)
-        assertEquals(pre.toList(), preorderList(root))
-        assertEquals(ino.toList(), inorderList(root))
-        assertEquals(listOf(listOf(2), listOf(1, 3)), levelOrder(root))
-    }
-
-    @Test
-    fun larger_tree_seven_nodes() {
-        // Tree:
-        //         4
-        //       /   \
-        //      2     6
-        //     / \   / \
-        //    1   3 5   7
-        val pre = intArrayOf(4, 2, 1, 3, 6, 5, 7)
-        val ino = intArrayOf(1, 2, 3, 4, 5, 6, 7)
-        val root = sut.buildTree(pre, ino)
-        assertEquals(pre.toList(), preorderList(root))
-        assertEquals(ino.toList(), inorderList(root))
-        assertEquals(listOf(listOf(4), listOf(2, 6), listOf(1, 3, 5, 7)), levelOrder(root))
+        return result
     }
 }
