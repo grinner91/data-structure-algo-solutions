@@ -55,34 +55,43 @@ class PermutationInStringFreqHashTable {
 
 class PermutationInStringSlidingWindowMatches {
     fun checkInclusion(s1: String, s2: String): Boolean {
-        if(s1.length > s2.length) return false
+        if (s1.length > s2.length) return false
         val n = 26 //ALPHABET_SIZE
         val a = 'a' //Base
         val fre1 = IntArray(n)
         val fre2 = IntArray(n)
-        for (i  in s1.indices) {
-            fre1[s1[i] - a]++
-            fre2[s2[i] - a]++
-        }
-        var match = 0
-        for (i in 0 until n){
-            if(fre1[i] == fre2[i]) match++
-        }
         var l = 0
-        for (r in s1.length until  s2.length) {
-            if(match == n) return true
+        var r = 0
+        while (r < s1.length) {
+            fre1[s1[r] - a]++
+            fre2[s2[r] - a]++
+            r++
+        }
 
+        var match = 0
+        for (i in 0 until n) {
+            if (fre1[i] == fre2[i]) match++
+        }
+
+        while (r < s2.length) {
+            //check current window
+            if (match == n) return true
+
+            //add new right char
             val right = s2[r] - a
             fre2[right]++
-            if(fre1[right] == fre2[right]) match++
-            else if(fre1[right] + 1 == fre2[right]) match--
+            if (fre1[right] == fre2[right]) match++
+            else if (fre1[right] + 1 == fre2[right]) match--  // just exceeded equality
 
+            //remove left char
             val left = s2[l] - a
             fre2[left]--
-            if(fre1[left] == fre2[left]) match++
-            else if(fre1[left] - 1 == fre2[left]) match--
+            if (fre1[left] == fre2[left]) match++
+            else if (fre1[left] - 1 == fre2[left]) match-- // just broke equality
 
+            //move left and right
             l++
+            r++
         }
         return match == n
     }
