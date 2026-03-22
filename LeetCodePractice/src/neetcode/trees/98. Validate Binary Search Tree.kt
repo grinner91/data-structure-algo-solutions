@@ -4,203 +4,180 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/**
- * Example:
- * var ti = TreeNode(5)
- * var v = ti.`val`
- * Definition for a binary tree node.
- * class TreeNode(var `val`: Int) {
- *     var left: TreeNode? = null
- *     var right: TreeNode? = null
- * }
- */
-
-object ValidateBSTBounds {
-
-    fun isValidBST1(root: TreeNode?): Boolean {
-        root ?: return true
-        return isValidBSTDfs(root, Long.MIN_VALUE, Long.MAX_VALUE)
-    }
-
-    //DFS
-    private fun isValidBSTDfs(root: TreeNode?, low: Long, high: Long): Boolean {
-        root ?: return true
-
-        if (root.`val` <= low || root.`val` >= high)
-            return false
-
-        return isValidBSTDfs(root.left, low, root.`val`.toLong())
-                && isValidBSTDfs(root.right, root.`val`.toLong(), high)
-    }
-
-    //BFS
+class ValidateBinarySearchRecursiveDfs {
     fun isValidBST(root: TreeNode?): Boolean {
-        root ?: return true
-        data class QueItem(val node: TreeNode, val low: Long, val high: Long)
-
-        val que = ArrayDeque<QueItem>()
-        que.addLast(QueItem(node = root, low = Long.MIN_VALUE, high = Long.MAX_VALUE))
-        while (que.isNotEmpty()) {
-            val (node, low, high) = que.removeFirst()
+        fun isValidDfs(node: TreeNode?, lower: Long, upper: Long): Boolean {
+            if (node == null) return true
             val value = node.`val`.toLong()
-            if (value <= low || value >= high)
-                return false
-            node.left?.let {
-                que.addLast(QueItem(it, low, value))
-            }
-            node.right?.let {
-                que.addLast(QueItem(it, value, high))
-            }
+            if (value <= lower || value >= upper) return false
+
+            return isValidDfs(node.left, lower, value)
+                    && isValidDfs(node.right, value, upper)
+
+        }
+        return isValidDfs(root, Long.MIN_VALUE, Long.MAX_VALUE)
+    }
+}
+
+class ValidateBinarySearchIterativeInOrder {
+    fun isValidBST(root: TreeNode?): Boolean {
+        if (root == null) return true
+        val inorder = mutableListOf<Int>()
+        fun dfs(node: TreeNode?) {
+            if (node == null) return
+            dfs(node.left)
+            inorder.add(node.`val`)
+            dfs(node.right)
+        }
+        dfs(root)
+        for (i in 1 until inorder.size) {
+            if (inorder[i] <= inorder[i - 1]) return false
         }
         return true
     }
-
-
 }
 
-// ---------------------------------------------------------------------------
+class ValidateBinarySearchBfs {
+    data class State(val node: TreeNode, val lower: Int?, val upper: Int?)
 
-/**
- * Build a binary tree from level-order values where null means “no node”.
- * Example: buildLevelOrder(5, 1, 4, null, null, 3, 6)
- */
-fun buildLevelOrder(vararg vals: Int?): TreeNode? {
-    if (vals.isEmpty() || vals[0] == null) return null
-    val root = TreeNode(vals[0]!!)
-    val q: ArrayDeque<TreeNode> = ArrayDeque()
-    q.add(root)
-    var i = 1
-    while (i < vals.size && q.isNotEmpty()) {
-        val node = q.removeFirst()
+    fun isValidBST(root: TreeNode?): Boolean {
+        if (root == null) return true
 
-        if (i < vals.size && vals[i] != null) {
-            node.left = TreeNode(vals[i]!!)
-            q.add(node.left!!)
+        val que = ArrayDeque<State>()
+        que.add(State(root, null, null))
+        while (que.isNotEmpty()) {
+            val (cur, lower, upper) = que.removeFirst()
+            val value = cur.`val`
+
+            if (lower != null && value <= lower) return false
+            if (upper != null && value >= upper) return false
+
+            cur.left?.let { que.addLast(State(it, lower, value)) }
+            cur.right?.let { que.addLast(State(it, value, upper)) }
         }
-        i++
-
-        if (i < vals.size && vals[i] != null) {
-            node.right = TreeNode(vals[i]!!)
-            q.add(node.right!!)
-        }
-        i++
+        return true
     }
-    return root
 }
 
-class ValidateBSTBoundsTest {
+class ValidateBinarySearchTreeTest {
+
+    private val impls = listOf(
+//        ValidateBinarySearchRecursiveDfs()::isValidBST,
+//        ValidateBinarySearchIterativeInOrder()::isValidBST,
+        ValidateBinarySearchBfs()::isValidBST
+    )
 
     @Test
-    fun `empty tree is valid`() {
-        val root: TreeNode? = null
-        assertTrue(ValidateBSTBounds.isValidBST(root))
-    }
+    fun validBst_simple() {
+        val root = node(
+            2,
+            node(1),
+            node(3),
+        )
 
-    @Test
-    fun `single node is valid`() {
-        val root = TreeNode(42)
-        assertTrue(ValidateBSTBounds.isValidBST(root))
-    }
-
-    @Test
-    fun `simple valid tree`() {
-        val root = buildLevelOrder(2, 1, 3)
-        assertTrue(ValidateBSTBounds.isValidBST(root))
-    }
-
-    @Test
-    fun `invalid due to right subtree violation`() {
-        // [5,1,4,null,null,3,6] -> invalid because 3 is in right subtree of 5
-        val root = buildLevelOrder(5, 1, 4, null, null, 3, 6)
-        assertFalse(ValidateBSTBounds.isValidBST(root))
-    }
-
-    @Test
-    fun `invalid due to left subtree violation deep`() {
-        //     10
-        //    /  \
-        //   5    15
-        //       /  \
-        //      6    20   (6 violates > 10)
-        val root = buildLevelOrder(10, 5, 15, null, null, 6, 20)
-        assertFalse(ValidateBSTBounds.isValidBST(root))
-    }
-
-    @Test
-    fun `duplicates on left not allowed`() {
-        // BST requires strict ordering: left < node < right
-        val root = buildLevelOrder(2, 2, null)
-        assertFalse(ValidateBSTBounds.isValidBST(root))
-    }
-
-    @Test
-    fun `duplicates on right not allowed`() {
-        val root = buildLevelOrder(2, null, 2)
-        assertFalse(ValidateBSTBounds.isValidBST(root))
-    }
-
-    @Test
-    fun `handles Int MIN and MAX correctly`() {
-        val root = TreeNode(Int.MIN_VALUE).apply {
-            right = TreeNode(Int.MAX_VALUE)
+        impls.forEach { isValidBST ->
+            assertTrue(isValidBST(root))
         }
-        assertTrue(ValidateBSTBounds.isValidBST(root))
     }
 
     @Test
-    fun `valid skewed increasing chain`() {
-        // 1 -> 2 -> 3 -> 4 (right-skewed)
-        val root = buildLevelOrder(1, null, 2, null, 3, null, 4)
-        assertTrue(ValidateBSTBounds.isValidBST(root))
-    }
+    fun invalidBst_immediateChildViolation() {
+        val root = node(
+            5,
+            node(1),
+            node(
+                4,
+                node(3),
+                node(6),
+            ),
+        )
 
-    @Test
-    fun `invalid when a deep node breaks upper bound`() {
-        //        8
-        //      /   \
-        //     3     10
-        //    / \      \
-        //   1   6      14
-        //      / \     /
-        //     4  13   9   <- 9 is in right subtree of 8 but < 10 branch; still should be > 10? No—placed under 14 left, but 9 < 10 violates bound from root's right side
-        val root = TreeNode(8).apply {
-            left = TreeNode(3).apply {
-                left = TreeNode(1)
-                right = TreeNode(6).apply {
-                    left = TreeNode(4)
-                    right = TreeNode(13)
-                }
-            }
-            right = TreeNode(10).apply {
-                right = TreeNode(14).apply {
-                    left = TreeNode(9) // violates (>10 && <14) → 9 <= 10
-                }
-            }
+        impls.forEach { isValidBST ->
+            assertFalse(isValidBST(root))
         }
-        assertFalse(ValidateBSTBounds.isValidBST(root))
     }
 
     @Test
-    fun `valid complex tree`() {
-        //        8
-        //      /   \
-        //     3     10
-        //    / \      \
-        //   1   6      14
-        //      / \     /
-        //     4   7   11
-        val root = TreeNode(8).apply {
-            left = TreeNode(3).apply {
-                left = TreeNode(1)
-                right = TreeNode(6).apply {
-                    left = TreeNode(4)
-                    right = TreeNode(7)
-                }
-            }
-            right = TreeNode(10).apply {
-                right = TreeNode(14).apply { left = TreeNode(11) }
-            }
+    fun invalidBst_deepViolationInLeftSubtree() {
+        val root = node(
+            10,
+            node(
+                5,
+                node(2),
+                node(12),
+            ),
+            node(15),
+        )
+
+        impls.forEach { isValidBST ->
+            assertFalse(isValidBST(root))
         }
-        assertTrue(ValidateBSTBounds.isValidBST(root))
+    }
+
+    @Test
+    fun invalidBst_deepViolationInRightSubtree() {
+        val root = node(
+            10,
+            node(5),
+            node(
+                15,
+                node(6),
+                node(20),
+            ),
+        )
+
+        impls.forEach { isValidBST ->
+            assertFalse(isValidBST(root))
+        }
+    }
+
+    @Test
+    fun invalidBst_duplicateValuesNotAllowed() {
+        val root = node(
+            2,
+            node(2),
+            node(3),
+        )
+
+        impls.forEach { isValidBST ->
+            assertFalse(isValidBST(root))
+        }
+    }
+
+    @Test
+    fun validBst_withIntBoundaries() {
+        val root = node(
+            0,
+            node(Int.MIN_VALUE),
+            node(Int.MAX_VALUE),
+        )
+
+        impls.forEach { isValidBST ->
+            assertTrue(isValidBST(root))
+        }
+    }
+
+    @Test
+    fun singleNode_isValid() {
+        val root = node(1)
+
+        impls.forEach { isValidBST ->
+            assertTrue(isValidBST(root))
+        }
+    }
+
+    @Test
+    fun nullTree_isValid() {
+        impls.forEach { isValidBST ->
+            assertTrue(isValidBST(null))
+        }
+    }
+
+    private fun node(
+        value: Int,
+        left: TreeNode? = null,
+        right: TreeNode? = null,
+    ): TreeNode {
+        return TreeNode(value, left, right)
     }
 }
