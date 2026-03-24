@@ -13,9 +13,60 @@ import kotlin.random.Random
  * }
  */
 
+class CodecBfs() {
+    fun serialize(root: TreeNode?): String {
+        root ?: return ""
+        val res = mutableListOf<String>()
+        val que = ArrayDeque<TreeNode?>()
+        while (que.isNotEmpty()) {
+            val cur = que.removeFirst()
+            if (cur != null) {
+                res.add(cur.`val`.toString())
+                que.addLast(cur.left)
+                que.addLast(cur.right)
+            } else {
+                res.add("N")
+            }
+        }
+        return res.joinToString(",")
+    }
+
+    fun deserialize(data: String): TreeNode? {
+        val tokens = data.split(",")
+            .filter { it.isNotEmpty() }
+            .iterator()
+
+        if (tokens.hasNext().not()) return null
+
+        val que = ArrayDeque<TreeNode?>()
+        val root = TreeNode(tokens.next().toInt())
+        que.addLast(root)
+        while (que.isNotEmpty() && tokens.hasNext()) {
+            val cur = que.removeFirst()
+            //construct left child
+            if (tokens.hasNext()) {
+                val v = tokens.next()
+                if (v != "N") {
+                    cur?.left = TreeNode(v.toInt())
+                    que.addLast(cur?.left)
+                }
+            }
+            //construct right child
+            if (tokens.hasNext()) {
+                val v = tokens.next()
+                if (v != "N") {
+                    cur?.right = TreeNode(v.toInt())
+                    que.addLast(cur?.right)
+                }
+            }
+        }
+        return root
+    }
+
+}
+
 //BFS
 class Codec() {
-    // Encodes a URL to a shortened URL.
     fun serialize(root: TreeNode?): String {
         root ?: return ""
         val res = mutableListOf<String>()
