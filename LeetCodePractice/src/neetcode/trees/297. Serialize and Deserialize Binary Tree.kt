@@ -13,21 +13,26 @@ import kotlin.random.Random
  * }
  */
 
-class CodecBfs() {
+class CodecBfs {
     fun serialize(root: TreeNode?): String {
         root ?: return ""
+
         val res = mutableListOf<String>()
-        val que = ArrayDeque<TreeNode?>()
+        val que = java.util.LinkedList<TreeNode?>()
+        que.addLast(root)
+
         while (que.isNotEmpty()) {
             val cur = que.removeFirst()
-            if (cur != null) {
+
+            if (cur == null) {
+                res.add("N")
+            } else {
                 res.add(cur.`val`.toString())
                 que.addLast(cur.left)
                 que.addLast(cur.right)
-            } else {
-                res.add("N")
             }
         }
+
         return res.joinToString(",")
     }
 
@@ -36,33 +41,39 @@ class CodecBfs() {
             .filter { it.isNotEmpty() }
             .iterator()
 
-        if (tokens.hasNext().not()) return null
+        if (!tokens.hasNext()) return null
 
-        val que = ArrayDeque<TreeNode?>()
-        val root = TreeNode(tokens.next().toInt())
+        val first = tokens.next()
+        if (first == "N") return null
+
+        val que = ArrayDeque<TreeNode>()
+        val root = TreeNode(first.toInt())
         que.addLast(root)
+
         while (que.isNotEmpty() && tokens.hasNext()) {
             val cur = que.removeFirst()
-            //construct left child
+
+            // construct left child
             if (tokens.hasNext()) {
                 val v = tokens.next()
                 if (v != "N") {
-                    cur?.left = TreeNode(v.toInt())
-                    que.addLast(cur?.left)
+                    cur.left = TreeNode(v.toInt())
+                    que.addLast(cur.left!!)
                 }
             }
-            //construct right child
+
+            // construct right child
             if (tokens.hasNext()) {
                 val v = tokens.next()
                 if (v != "N") {
-                    cur?.right = TreeNode(v.toInt())
-                    que.addLast(cur?.right)
+                    cur.right = TreeNode(v.toInt())
+                    que.addLast(cur.right!!)
                 }
             }
         }
+
         return root
     }
-
 }
 
 //BFS
@@ -229,7 +240,7 @@ class CodecTest {
     }
 
 
-    private val codec = Codec()
+    private val codec = CodecBfs()
 
     @Test
     @DisplayName("Empty tree round-trip")
