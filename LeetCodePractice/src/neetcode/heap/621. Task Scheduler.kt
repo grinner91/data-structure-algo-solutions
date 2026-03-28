@@ -9,7 +9,7 @@ import kotlin.collections.ArrayDeque
 Main idea
 We keep 2 data structures:
 -> maxHeap → tasks ready to run now, ordered by highest remaining count
--> cooldown → tasks that were just used and cannot run until some future time
+-> cooldown que → tasks that were just used and cannot run until some future time
 
 At each time unit:
 1. increase time
@@ -25,6 +25,7 @@ class TaskSchedulerMaxHeap {
 
         val freq = tasks.asSequence().groupingBy { it }.eachCount()
         val maxHeap = PriorityQueue<Int>(compareByDescending { it })
+
         freq.forEach { maxHeap.add(it.value) }
 
         data class CoolingTask(val count: Int, val nextTimeSlot: Int)
