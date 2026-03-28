@@ -6,40 +6,61 @@ import org.junit.jupiter.api.Test
 import java.util.*
 import kotlin.random.Random
 
+/*
+-------------------------------------------------------
+Solution 3: Two Heaps (OPTIMAL)
+-------------------------------------------------------
+Max-heap "left":
+- stores the smaller half
+Min-heap "right":
+- stores the larger half
+
+Maintain:
+1. left.size == right.size
+   or
+2. left.size == right.size + 1
+
+Then:
+- if total count is odd, median = left.peek()
+- if even, median = average of left.peek() and right.peek()
+
+Time:
+- addNum: O(log n)
+- findMedian: O(1)
+
+Space: O(n)
+
+This is the standard optimal solution.
+*/
+
 class MedianFinder() {
-    //max heap - lower half
-    private val smallHeap = PriorityQueue<Int>(compareByDescending { it })
-    //min heap - upper half
-    private val largeHeap = PriorityQueue<Int>()
+    //large numbers, minHeap
+    private val rightHeap = PriorityQueue<Int>()
+    //small numbers, maxHeap
+    private val leftHeap = PriorityQueue<Int>(compareByDescending { it })
 
     fun addNum(num: Int) {
-        if (largeHeap.isNotEmpty() && num > largeHeap.peek()) {
-            largeHeap.add(num)
+        if (leftHeap.isEmpty() || num <= leftHeap.peek()) {
+            leftHeap.offer(num)
         } else {
-            smallHeap.add(num)
+            rightHeap.offer(num)
         }
-        //re-balance
-        when {
-            smallHeap.size > largeHeap.size + 1 -> largeHeap.add(smallHeap.remove())
-            largeHeap.size > smallHeap.size + 1 -> smallHeap.add(largeHeap.remove())
+
+        if (leftHeap.size > rightHeap.size + 1) {
+            rightHeap.offer(leftHeap.poll())
+        } else if (rightHeap.size > leftHeap.size) {
+            leftHeap.offer(rightHeap.poll())
         }
     }
 
     fun findMedian(): Double {
-        return when {
-            smallHeap.size > largeHeap.size -> smallHeap.peek().toDouble()
-            largeHeap.size > smallHeap.size -> largeHeap.peek().toDouble()
-            else -> (smallHeap.peek() + largeHeap.peek()) / 2.0
+        return if (leftHeap.size > rightHeap.size) {
+            leftHeap.peek().toDouble()
+        } else {
+            (leftHeap.peek().toLong() + rightHeap.peek().toLong()) / 2.0
         }
     }
 }
-
-/**
- * Your MedianFinder object will be instantiated and called as such:
- * var obj = MedianFinder()
- * obj.addNum(num)
- * var param_2 = obj.findMedian()
- */
 
 //chatgpt unit tests
 class MedianFinderTest {
