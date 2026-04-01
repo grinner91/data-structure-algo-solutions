@@ -3,107 +3,159 @@ package neetcode.backtracking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-class SolutionCombinationSum {
-    //backtracking, TC O(2^t/m), SC O(2^t/m)
+class CombinationSumBacktrackingRecursion {
     fun combinationSum(candidates: IntArray, target: Int): List<List<Int>> {
-        if (candidates.isEmpty() || target <= 0) return emptyList()
-
-        val result = mutableListOf<List<Int>>()
-        candidates.sort()
-
-        fun dfs(i: Int, cur: MutableList<Int>, total: Int) {
+        val res = mutableListOf<List<Int>>()
+        val path = mutableListOf<Int>()
+        fun dfs(i: Int, total: Int) {
             if (total == target) {
-                result.add(ArrayList(cur))
+                res.add(path.toList())
                 return
             }
-            for (j in i until candidates.size) {
-                val next = candidates[j]
-                if (total + next > target) break
-                cur.add(next)
-                dfs(j, cur, total + next)
-                //remove last elem
-                cur.removeAt(cur.lastIndex)
+            if (i >= candidates.size || total > target) {
+                return
             }
+            path.add(candidates[i])
+            dfs(i, total + candidates[i])
+            path.removeLast()
+            dfs(i + 1, total)
         }
-        dfs(0, mutableListOf(), 0)
-        return result
+        dfs(0, 0)
+        return res
     }
 }
 
+class CombinationSumBacktrackingLoop {
+    fun combinationSum(candidates: IntArray, target: Int): List<List<Int>> {
+        val res = mutableListOf<List<Int>>()
+        val path = mutableListOf<Int>()
+
+        candidates.sort()
+
+        fun backtrack(start: Int, remaining: Int) {
+            if (remaining == 0) {
+                res.add(path.toList())
+                return
+            }
+
+            for (i in start until candidates.size) {
+                val x = candidates[i]
+                if (x > remaining) break
+
+                path.add(x)
+                backtrack(i, remaining - x)
+                path.removeLast() //backtrack to previous state
+            }
+        }
+        backtrack(0, target)
+        return res
+    }
+}
+
+
 class CombinationSumTest {
-    private val sut = SolutionCombinationSum()
-    private fun normalize(ans: List<List<Int>>): List<List<Int>> =
-        ans.map { it.sorted() }.sortedWith(compareBy({ it.size }, { it.joinToString(",") }))
+
+    private val impls = listOf(
+        CombinationSumBacktrackingLoop()::combinationSum,
+//        CombinationSumBacktrackingRecursion()::combinationSum
+    )
 
     @Test
-    fun basicExample_1() {
+    fun example1() {
         val candidates = intArrayOf(2, 3, 6, 7)
         val target = 7
+
         val expected = listOf(
-            listOf(7),
-            listOf(2, 2, 3)
+            listOf(2, 2, 3),
+            listOf(7)
         )
-        val exp = normalize(expected)
-        val act = normalize(sut.combinationSum(candidates, target))
-        assertEquals(exp, act)
+
+        impls.forEach { f ->
+            assertCombinationEquals(expected, f(candidates, target))
+        }
     }
 
     @Test
-    fun basicExample_2() {
+    fun example2() {
         val candidates = intArrayOf(2, 3, 5)
         val target = 8
+
         val expected = listOf(
             listOf(2, 2, 2, 2),
             listOf(2, 3, 3),
             listOf(3, 5)
         )
-        assertEquals(
-            normalize(expected),
-            normalize(sut.combinationSum(candidates, target))
-        )
+
+        impls.forEach { f ->
+            assertCombinationEquals(expected, f(candidates, target))
+        }
     }
 
     @Test
     fun noSolution() {
-        val candidates = intArrayOf(5, 10)
-        val target = 3
+        val candidates = intArrayOf(2)
+        val target = 1
+
         val expected = emptyList<List<Int>>()
-        assertEquals(
-            normalize(expected),
-            normalize(sut.combinationSum(candidates, target))
-        )
+
+        impls.forEach { f ->
+            assertCombinationEquals(expected, f(candidates, target))
+        }
     }
 
     @Test
-    fun singleCandidateMultipleUses() {
-        val candidates = intArrayOf(3)
-        val target = 9
-        val expected = listOf(listOf(3, 3, 3))
-        assertEquals(
-            normalize(expected),
-            normalize(sut.combinationSum(candidates, target))
+    fun singleCandidateRepeatedManyTimes() {
+        val candidates = intArrayOf(1)
+        val target = 2
+
+        val expected = listOf(
+            listOf(1, 1)
         )
+
+        impls.forEach { f ->
+            assertCombinationEquals(expected, f(candidates, target))
+        }
     }
 
     @Test
-    fun emptyCandidates() {
-        val candidates = intArrayOf()
+    fun targetEqualsCandidate() {
+        val candidates = intArrayOf(4, 5, 8)
+        val target = 5
+
+        val expected = listOf(
+            listOf(5)
+        )
+
+        impls.forEach { f ->
+            assertCombinationEquals(expected, f(candidates, target))
+        }
+    }
+
+    @Test
+    fun largerMix() {
+        val candidates = intArrayOf(2, 3, 4)
         val target = 7
-        val expected = emptyList<List<Int>>()
-        assertEquals(
-            normalize(expected),
-            normalize(sut.combinationSum(candidates, target))
+
+        val expected = listOf(
+            listOf(2, 2, 3),
+            listOf(3, 4)
         )
+
+        impls.forEach { f ->
+            assertCombinationEquals(expected, f(candidates, target))
+        }
     }
 
-    @Test
-    fun targetZero() {
-        val candidates = intArrayOf(2, 3)
-        val target = 0
-        val expected = emptyList<List<Int>>() // defined as no combinations for non-positive target here
-        assertEquals(
-            normalize(expected),
-            normalize(sut.combinationSum(candidates, target))
-        )
+    private fun assertCombinationEquals(
+        expected: List<List<Int>>,
+        actual: List<List<Int>>,
+    ) {
+        assertEquals(normalize(expected), normalize(actual))
+    }
+
+    private fun normalize(combinations: List<List<Int>>): List<List<Int>> {
+        return combinations
+            .map { it.sorted() }
+            .sortedWith(compareBy<List<Int>>({ it.size }, { it.joinToString(",") }))
     }
 }
