@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 /*
 Total work = (m * n) * (DFS cost per start)
            = (m * n) * O(3^L)
-           
+
            3 - directions after first cell
            L - is length of word
 * */
