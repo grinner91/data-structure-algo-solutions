@@ -3,80 +3,148 @@ package neetcode.backtracking
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-
-//https://leetcode.com/problems/word-search/
-//https://neetcode.io/problems/search-for-word
-
-class SolutionExistWord {
+/*
+Total work = (m * n) * (DFS cost per start)
+           = (m * n) * O(3^L)
+           
+           3 - directions after first cell
+           L - is length of word
+* */
+class WordSearchDfsInPlaceMarking {
     fun exist(board: Array<CharArray>, word: String): Boolean {
-        val rows = board.size
-        val cols = board[0].size
-        val path = mutableSetOf<Pair<Int, Int>>()
+        val rows = board.size - 1
+        val cols = board[0].size - 1
+
         fun dfs(r: Int, c: Int, i: Int): Boolean {
             if (i == word.length) return true
-            val pair = Pair(r, c)
-            if (r < 0 || c < 0 || r >= rows || c >= cols
-                || board[r][c] != word[i]
-                || pair in path
-            ) return false
-            path.add(pair)
-            val res = dfs(r + 1, c, i + 1)
-                    || dfs(r - 1, c, i + 1)
-                    || dfs(r, c + 1, i + 1)
-                    || dfs(r, c - 1, i + 1)
-            path.remove(pair)
-            return res
+            if (r !in 0..rows || c !in 0..cols) return false
+            if (board[r][c] != word[i]) return false
+
+            val ch = board[r][c]
+            board[r][c] = '#'
+            val found = dfs(r + 1, c, i + 1) ||
+                    dfs(r - 1, c, i + 1) ||
+                    dfs(r, c + 1, i + 1) ||
+                    dfs(r, c - 1, i + 1)
+
+            board[r][c] = ch
+            return found
         }
-        for (r in board.indices) {
-            for (c in board[0].indices) {
+
+        for (r in 0..rows) {
+            for (c in 0..cols) {
                 if (dfs(r, c, 0)) return true
             }
         }
+
         return false
     }
 }
 
-//chatgpt unit tests
 class WordSearchTest {
 
-    private val sut = SolutionExistWord()
+    private val impls = listOf<(Array<CharArray>, String) -> Boolean>(
+        WordSearchDfsInPlaceMarking()::exist,
+    )
 
     @Test
     fun example1() {
-        val board = arrayOf(
-            charArrayOf('A', 'B', 'C', 'E'),
-            charArrayOf('S', 'F', 'C', 'S'),
-            charArrayOf('A', 'D', 'E', 'E')
-        )
-        assertTrue(sut.exist(board.map { it.clone() }.toTypedArray(), "ABCCED"))
-        assertTrue(sut.exist(board.map { it.clone() }.toTypedArray(), "SEE"))
-        assertFalse(sut.exist(board.map { it.clone() }.toTypedArray(), "ABCB"))
+        impls.forEach { exist ->
+            val board = boardOf(
+                "ABCE",
+                "SFCS",
+                "ADEE"
+            )
+            assertTrue(exist(board, "ABCCED"))
+        }
     }
 
     @Test
-    fun singleLetterBoard() {
-        val board = arrayOf(charArrayOf('a'))
-        assertTrue(sut.exist(board.map { it.clone() }.toTypedArray(), "a"))
-        assertFalse(sut.exist(board.map { it.clone() }.toTypedArray(), "aa"))
+    fun example2() {
+        impls.forEach { exist ->
+            val board = boardOf(
+                "ABCE",
+                "SFCS",
+                "ADEE"
+            )
+            assertTrue(exist(board, "SEE"))
+        }
     }
 
     @Test
-    fun requiresNonRevisit() {
-        val board = arrayOf(
-            charArrayOf('a', 'b'),
-            charArrayOf('c', 'd')
-        )
-        // "aba" would require revisiting 'a'; should be false
-        assertFalse(sut.exist(board.map { it.clone() }.toTypedArray(), "aba"))
+    fun example3() {
+        impls.forEach { exist ->
+            val board = boardOf(
+                "ABCE",
+                "SFCS",
+                "ADEE"
+            )
+            assertFalse(exist(board, "ABCB"))
+        }
     }
 
     @Test
-    fun frequencyPruneFastFail() {
-        val board = arrayOf(
-            charArrayOf('X', 'Y'),
-            charArrayOf('Z', 'W')
-        )
-        // Board has no 'Q' at all, should fail quickly
-        assertFalse(sut.exist(board.map { it.clone() }.toTypedArray(), "QQQ"))
+    fun singleCellMatch() {
+        impls.forEach { exist ->
+            val board = boardOf("A")
+            assertTrue(exist(board, "A"))
+        }
+    }
+
+    @Test
+    fun singleCellNoMatch() {
+        impls.forEach { exist ->
+            val board = boardOf("A")
+            assertFalse(exist(board, "B"))
+        }
+    }
+
+    @Test
+    fun cannotReuseSameCell() {
+        impls.forEach { exist ->
+            val board = boardOf(
+                "AA"
+            )
+            assertFalse(exist(board, "AAA"))
+        }
+    }
+
+    @Test
+    fun pathTurnsMultipleTimes() {
+        impls.forEach { exist ->
+            val board = boardOf(
+                "ABC",
+                "DEF",
+                "GHI"
+            )
+            assertTrue(exist(board, "ABCFI"))
+        }
+    }
+
+    @Test
+    fun wordLongerThanCellCount() {
+        impls.forEach { exist ->
+            val board = boardOf(
+                "AB",
+                "CD"
+            )
+            assertFalse(exist(board, "ABCDE"))
+        }
+    }
+
+    @Test
+    fun repeatedLettersValidPath() {
+        impls.forEach { exist ->
+            val board = boardOf(
+                "CAA",
+                "AAA",
+                "BCD"
+            )
+            assertTrue(exist(board, "AAB"))
+        }
+    }
+
+    private fun boardOf(vararg rows: String): Array<CharArray> {
+        return Array(rows.size) { r -> rows[r].toCharArray() }
     }
 }
