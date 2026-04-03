@@ -6,6 +6,11 @@ import org.junit.jupiter.api.Test
 Time: O(Cn × n) where Cn is the nth Catalan number
 Approx: O(4^n / sqrt(n)) valid results, and each string costs up to O(n) to build/copy
 Space: O(n) recursion stack, excluding output
+
+If each position has k choices and there are m positions → total = k^m
+k = 2 (two symbols)
+m = 2n (length)
+2^(2n) = ((2^2)^n) = 4^n
 * */
 
 class GenerateParenthesesBacktrackingOptimal {
