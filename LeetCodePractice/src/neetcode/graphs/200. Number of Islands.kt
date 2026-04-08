@@ -5,12 +5,11 @@ import org.junit.jupiter.api.Test
 
 class NumberOfIslandsDFS {
     fun numIslands(grid: Array<CharArray>): Int {
-        val rows = grid.size
-        val cols = grid[0].size
+        if (grid.isEmpty() || grid[0].isEmpty()) return 0
 
-        var islands = 0
         fun dfs(r: Int, c: Int) {
-            if (r < 0 || c < 0 || r >= rows || c >= cols
+            if (r !in grid.indices
+                || c !in grid[0].indices
                 || grid[r][c] == '0'
             ) {
                 return
@@ -22,14 +21,16 @@ class NumberOfIslandsDFS {
             dfs(r, c - 1)
         }
 
-        for (i in grid.indices) {
-            for (j in grid[0].indices) {
-                if (grid[i][j] == '1') {
+        var islands = 0
+        for (r in grid.indices) {
+            for(c in grid[0].indices) {
+                if (grid[r][c] == '1') {
                     islands++
-                    dfs(i, j)
+                    dfs(r, c)
                 }
             }
         }
+
         return islands
     }
 }
